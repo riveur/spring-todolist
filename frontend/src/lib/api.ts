@@ -14,14 +14,7 @@ type FetchOptions = {
   params?: Record<string, string | number>;
 }
 
-type Endpoints =
-  "get-all-todos" |
-  "get-one-todo" |
-  "toggle-todo" |
-  "create-todo" |
-  "delete-todo";
-
-const APIEndpoints: Record<Endpoints, ApiEndpoint> = {
+const APIEndpoints = {
   "get-all-todos": {
     method: "GET",
     path: "/todos",
@@ -42,7 +35,9 @@ const APIEndpoints: Record<Endpoints, ApiEndpoint> = {
     method: "POST",
     path: "/todos/:id/toggle",
   },
-} as const;
+} satisfies Record<string, ApiEndpoint>;
+
+type Endpoints = keyof typeof APIEndpoints;
 
 export class ApiClient {
   private static instance: ApiClient;
@@ -57,7 +52,7 @@ export class ApiClient {
     return ApiClient.instance;
   }
 
-  private buildEndpoint<Endpoint extends Endpoints>(endpoint: Endpoint, params: FetchOptions['params'] = {}) {
+  private buildEndpoint(endpoint: Endpoints, params: FetchOptions['params'] = {}) {
     const apiUrl = env.VITE_BACKEND_URL;
     let path = APIEndpoints[endpoint].path;
 
@@ -68,7 +63,7 @@ export class ApiClient {
     return apiUrl + path;
   }
 
-  private async fetch<Endpoint extends Endpoints>(path: Endpoint, options: FetchOptions = {}) {
+  private async fetch(path: Endpoints, options: FetchOptions = {}) {
     const endpoint = APIEndpoints[path];
     const url = this.buildEndpoint(path, options.params);
 
