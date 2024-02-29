@@ -1,5 +1,6 @@
 package fr.riveur.todolist.controller;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +26,7 @@ public class TodoController {
 
     @GetMapping("/todos")
     public ResponseEntity<Iterable<Todo>> index() {
-        return ResponseEntity.ok(this.todoRepository.findAll());
+        return ResponseEntity.ok(this.todoRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")));
     }
 
     @GetMapping("/todos/{id}")
