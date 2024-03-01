@@ -1,6 +1,7 @@
-import { TodoInput, TodoSchema, TodosSchema } from "./validation";
+import { LoginResponseSchema, TodoInput, TodoSchema, TodosSchema } from "@/lib/validation";
 import { env } from "@/env/client";
-import ky, { type Options } from 'ky';
+import useTokenStore from "@/hooks/use-token-store";
+import ky, { type Options } from "ky";
 
 type ApiEndpoint = {
   method: AllowedMethods;
@@ -35,6 +36,10 @@ const APIEndpoints = {
     method: "POST",
     path: "/todos/:id/toggle",
   },
+  "auth-login": {
+    method: "POST",
+    path: "/auth/login",
+  },
 } satisfies Record<string, ApiEndpoint>;
 
 type Endpoints = keyof typeof APIEndpoints;
@@ -66,13 +71,31 @@ export class ApiClient {
   private async fetch(path: Endpoints, options: FetchOptions = {}) {
     const endpoint = APIEndpoints[path];
     const url = this.buildEndpoint(path, options.params);
+    const tokenStore = useTokenStore.getState();
 
     const fetchOptions: Options = {
       method: endpoint.method,
       headers: {
         'Accept': 'application/json',
+      },
+      hooks: {
+        beforeError: [
+          (error) => {
+            if (error.response.status === 401) {
+              tokenStore.reset();
+            }
+            return error;
+          }
+        ]
       }
     };
+
+    if (tokenStore.getToken()) {
+      fetchOptions.headers = {
+        ...fetchOptions.headers,
+        'Authorization': `Bearer ${tokenStore.getToken()}`,
+      };
+    }
 
     if (options.body) {
       fetchOptions.body = JSON.stringify(options.body);
@@ -103,6 +126,10 @@ export class ApiClient {
 
   async toggleTodoById(id: number) {
     return this.fetch("toggle-todo", { params: { id } });
+  }
+
+  async login(email: string, password: string) {
+    return this.fetch("auth-login", { body: { email, password } }).then(LoginResponseSchema.parse);
   }
 
 }
