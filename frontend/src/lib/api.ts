@@ -1,4 +1,4 @@
-import { LoginResponseSchema, TodoInput, TodoSchema, TodosSchema } from "@/lib/validation";
+import { EditTodoInput, LoginResponseSchema, TodoInput, TodoSchema, TodosSchema } from "@/lib/validation";
 import { env } from "@/env/client";
 import useTokenStore from "@/hooks/use-token-store";
 import ky, { type Options } from "ky";
@@ -27,6 +27,10 @@ const APIEndpoints = {
   "create-todo": {
     method: "POST",
     path: "/todos",
+  },
+  "edit-todo": {
+    method: "PUT",
+    path: "/todos/:id",
   },
   "delete-todo": {
     method: "DELETE",
@@ -118,6 +122,10 @@ export class ApiClient {
 
   async createTodo(todo: TodoInput) {
     return this.fetch("create-todo", { body: todo }).then(TodoSchema.parse);
+  }
+
+  async editTodo(id: number, todo: EditTodoInput) {
+    return this.fetch("edit-todo", { params: { id }, body: todo }).then(TodoSchema.parse);
   }
 
   async deleteTodo(id: number) {
